@@ -165,11 +165,30 @@ app.get('/fetch_resource', function(req, res) {
 });
 
 app.post('/revoke', function(req, res) {
-
-	/*
-	 * Call the token revocation endpoint and throw out all our tokens
-	 */
-
+	var form_data = qs.stringify({
+		token: access_token
+	});
+	var headers = {
+		'Content-Type': 'application/x-www-form-urlencoded',
+		'Authorization': 'Basic ' + encodeClientCredentials(client.client_id, client.client_secret)
+	};
+	console.log('Revoking token %s', access_token);
+	var tokRes = request('POST', authServer.revocationEndpoint, {
+		body: form_data,
+		headers: headers
+	});
+	
+	access_token = null;
+	refresh_token = null;
+	scope = null;
+	
+	if (tokRes.statusCode >= 200 && tokRes.statusCode < 300) {
+		res.render('index', {access_token: access_token, refresh_token: refresh_token, scope: scope});
+		return;
+	} else {
+		res.render('error', {error: tokRes.statusCode});
+		return;
+	}
 });
 
 app.use('/', express.static('files/client'));
