@@ -313,6 +313,11 @@ var checkClientMetadata = function(req, res) {
 		reg.scope = req.body.scope;
 	}
 	
+	reg.client_id = randomstring.generate();
+	if (__.contains(['client_secret_basic', 'client_secret_post']), reg.token_endpoint_auth_method) {
+		reg.client_secret = randomstring.generate();
+	}
+	
 	return reg;
 };
 
@@ -321,11 +326,6 @@ app.post('/register', function (req, res){
 	var reg = checkClientMetadata(req, res);
 	if (!reg) {
 		return;
-	}
-	
-	reg.client_id = randomstring.generate();
-	if (__.contains(['client_secret_basic', 'client_secret_post']), reg.token_endpoint_auth_method) {
-		reg.client_secret = randomstring.generate();
 	}
 	
 	reg.client_id_created_at = Math.floor(Date.now() / 1000);
@@ -369,18 +369,17 @@ var authorizeConfigurationEndpointRequest = function (req, res, next) {
 };
 
 app.get('/register/:clientId', authorizeConfigurationEndpointRequest, function(req, res) {
-	res.status(200).json(req.client);
-	return;
+	res.status(200).json(client);
 });
 
 app.put('/register/:clientId', authorizeConfigurationEndpointRequest, function(req, res) {
 
-	if (req.body.client_id != req.client.client_id) {
+	if (req.body.client_id != client.client_id) {
 		res.status(400).json({error: 'invalid_client_metadata'});
 		return;
 	}
 	
-	if (req.body.client_secret && req.body.client_secret != req.client.client_secret) {
+	if (req.body.client_secret && req.body.client_secret != client.client_secret) {
 		res.status(400).json({error: 'invalid_client_metadata'});
 	}
 
@@ -389,16 +388,19 @@ app.put('/register/:clientId', authorizeConfigurationEndpointRequest, function(r
 		return;
 	}
 
+	__.each(client, function(value, key, list) {
+		client[key] = reg[key];
+	});
 	__.each(reg, function(value, key, list) {
-		req.client[key] = reg[key];
+		client[key] = reg[key];
 	});
 
-	res.status(200).json(req.client);
-	return;
+	res.status(200).json(client);
+	
 });
 
 app.delete('/register/:clientId', authorizeConfigurationEndpointRequest, function(req, res) {
-	clients = __.reject(clients, __.matches({client_id: req.client.client_id}));
+	clients = __.reject(clients, __.matches({client_id: client.client_id}));
 
   nosql.remove().make(function(builder) {
     builder.where('client_id', clientId);
@@ -409,6 +411,8 @@ app.delete('/register/:clientId', authorizeConfigurationEndpointRequest, functio
 	
 	res.status(204).end();
 	return;
+
+	
 });
 
 var buildUrl = function(base, options, hash) {

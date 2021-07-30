@@ -200,79 +200,25 @@ var registerClient = function() {
 
 app.get('/read_client', function(req, res) {
 
-	var headers = {
-		'Accept': 'application/json',
-		'Authorization': 'Bearer ' + client.registration_access_token
-	};
-	
-	var regRes = request('GET', client.registration_client_uri, {
-		headers: headers
-	});
-	
-	if (regRes.statusCode == 200) {
-		client = JSON.parse(regRes.getBody());
-		res.render('data', {resource: client});
-		return;
-	} else {
-		res.render('error', {error: 'Unable to read client ' + regRes.statusCode});
-		return;
-	}
+	/* 
+	 * Read the client's registration information from the management endpoint
+	 */
 	
 });
 
 app.post('/update_client', function(req, res) {
 
-	var headers = {
-		'Content-Type': 'application/json',
-		'Accept': 'application/json',
-		'Authorization': 'Bearer ' + client.registration_access_token
-	};
-	
-	var reg = __.clone(client);
-	delete reg['client_id_issued_at'];
-	delete reg['client_secret_expires_at'];
-	delete reg['registration_client_uri'];
-	delete reg['registration_access_token'];
-	
-	reg.client_name = req.body.client_name;
-	
-	console.log("Sending updated client: ", reg);
-	
-	var regRes = request('PUT', client.registration_client_uri, {
-		body: JSON.stringify(reg),
-		headers: headers
-	});
-	
-	if (regRes.statusCode == 200) {
-		client = JSON.parse(regRes.getBody());
-		res.render('index', {access_token: access_token, refresh_token: refresh_token, scope: scope, client: client});
-		return;
-	} else {
-		res.render('error', {error: 'Unable to update client ' + regRes.statusCode});
-		return;
-	}
-	
+	/*
+	 * Update the client's registration with input from the form
+	 */
+
 });
 
 app.get('/unregister_client', function(req, res) {
 
-	var headers = {
-		'Authorization': 'Bearer ' + client.registration_access_token
-	};
-	
-	var regRes = request('DELETE', client.registration_client_uri, {
-		headers: headers
-	});
-	
-	client = {};
-
-	if (regRes.statusCode == 204) {
-		res.render('index', {access_token: access_token, refresh_token: refresh_token, scope: scope, client: client});
-		return;
-	} else {
-		res.render('error', {error: 'Unable to delete client ' + regRes.statusCode});
-		return;
-	}
+	/*
+	 * Delete the client's registration from the server
+	 */
 	
 });
 
